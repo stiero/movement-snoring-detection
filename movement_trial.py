@@ -17,8 +17,8 @@ import glob
 files = list(glob.glob("test_data/*.csv"))
 files.sort()
 
-#test_file = files[-1]
-#files.pop(-1)
+test_file = files[-1]
+files.pop(-1)
 
 df = pd.DataFrame()
 
@@ -53,21 +53,21 @@ df['diff_mean'] = mean - df['obs']
 
 #df['diff_mean_ma_01s'] = df['diff_mean'].rolling(window=obs_per_sec//10).mean()
 
-df['delta_mean'] = df['diff_mean'] / mean
+df['delta_mean'] = abs(df['diff_mean'] / mean)
 
-df['delta_mean_ma_01s'] = df['delta_mean'].rolling(window=obs_per_sec//10).mean()
+df['delta_mean_ma_100ms'] = df['delta_mean'].rolling(window=obs_per_sec//10).mean()
 
-df['delta_mean_ma_5th'] = df['delta_mean'].rolling(window=obs_per_sec//5).mean()
+df['delta_mean_ma_200ms'] = df['delta_mean'].rolling(window=obs_per_sec//5).mean()
 
 
 
-aa = df.iloc[20000:30000]    #Movement
+aa = df.iloc[20000:30000]    # Long movement (possibly intense)
 
-bb = df.iloc[6000:9000]     #Calm
+bb = df.iloc[50000:52000]     # Calm
 
-cc = df.iloc[14000:20000]   #Movement
+cc = df.iloc[64000:65000]   # Very Short movement
 
-dd = df.iloc[45000:50000]   #Calm
+dd = df.iloc[95000:98000]   # Medium movement
 
 ee = df.iloc[4000:7000]     #Movement
 
@@ -81,13 +81,18 @@ plt.plot(df['obs'])
 
 #Flagging as movement those with delta_mean_ma_5th > 0.2 25 observations after recording
 
-df_test = df.copy().reset_index()
+df_test = df.copy()
+
+df_test['movement'] = 0
 
 for index, row in df_test.iterrows():
 
-    df_test.iloc[index, 'movement'] = df_test['delta_mean_ma_5th']
+    df_test.loc[index-49:index+1, 'movement'] = np.where(
+            
+            df_test.iloc[index]['delta_mean_ma_200ms'] > 0.2, 1, 0)
 
 
+dd = df_test.iloc[95000:98000]   # Medium movement
 
 
 
