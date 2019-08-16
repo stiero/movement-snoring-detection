@@ -14,91 +14,91 @@ import matplotlib.pyplot as plt
 
 import glob 
 
-files = list(glob.glob("movement_test_data/*.csv"))
-files.sort()
+files_movement = list(glob.glob("movement_test_data/*.csv"))
+files_movement.sort()
 
-test_file = files[-1]
-files.pop(-1)
+test_file_movement = files_movement[-1]
+files_movement.pop(-1)
 
-df = pd.DataFrame()
+df_movement = pd.DataFrame()
 
-for file in files:
+for file in files_movement:
     df_open = pd.read_csv(file, header=None)
-    df = pd.concat([df, df_open], axis=0)
+    df_movement = pd.concat([df_movement, df_open], axis=0)
     del df_open
     
-df = df.reset_index(drop=True)
+df_movement = df_movement.reset_index(drop=True)
 
-df.columns = ['obs']
-
-
-obs_per_sec = round(df.shape[0]/(4*4*60))
+df_movement.columns = ['obs']
 
 
-mean = df.obs.mean()
-
-median = df.obs.median()
-
-#df['obs_ma_1'] = df['obs'].rolling(window=obs_per_sec).mean()
-
-#df['obs_ma_2'] = df['obs'].rolling(window=2*obs_per_sec).mean()
-
-#df['obs_ma_4'] = df['obs'].rolling(window=4*obs_per_sec).mean()
-
-df['obs_mean'] = mean
-
-df['diff_mean'] = mean - df['obs']
-
-#df['diff_mean_ma_1s'] = df['diff_mean'].rolling(window=obs_per_sec).mean()
-
-#df['diff_mean_ma_01s'] = df['diff_mean'].rolling(window=obs_per_sec//10).mean()
-
-df['delta_mean'] = abs(df['diff_mean'] / mean)
-
-df['delta_mean_ma_100ms'] = df['delta_mean'].rolling(window=obs_per_sec//10).mean()
-
-df['delta_mean_ma_200ms'] = df['delta_mean'].rolling(window=obs_per_sec//5).mean()
-
-df['diff_1'] = abs(df['obs'].diff(1))
-
-df['diff_1_rolling_mean_abs'] = df['diff_1'].rolling(window=10).mean()
-
-df['diff_2'] = abs(df['diff_1_rolling_mean_abs'].diff())
+obs_per_sec = round(df_movement.shape[0]/(4*4*60))
 
 
-aa = df.iloc[20000:30000]    # Long movement (possibly intense)
+mean = df_movement.obs.mean()
 
-bb = df.iloc[50000:52000]     # Calm
+median = df_movement.obs.median()
 
-cc = df.iloc[64000:65000]   # Very Short movement
+#df_movement['obs_ma_1'] = df_movement['obs'].rolling(window=obs_per_sec).mean()
 
-dd = df.iloc[95000:98000]   # Medium movement
+#df_movement['obs_ma_2'] = df_movement['obs'].rolling(window=2*obs_per_sec).mean()
 
-ee = df.iloc[4000:7000]     #Movement
+#df_movement['obs_ma_4'] = df_movement['obs'].rolling(window=4*obs_per_sec).mean()
 
-ff = df.iloc[30000:35000]   #Movement
+df_movement['obs_mean'] = mean
+
+df_movement['diff_mean'] = mean - df_movement['obs']
+
+#df_movement['diff_mean_ma_1s'] = df_movement['diff_mean'].rolling(window=obs_per_sec).mean()
+
+#df_movement['diff_mean_ma_01s'] = df_movement['diff_mean'].rolling(window=obs_per_sec//10).mean()
+
+df_movement['delta_mean'] = abs(df_movement['diff_mean'] / mean)
+
+df_movement['delta_mean_ma_100ms'] = df_movement['delta_mean'].rolling(window=obs_per_sec//10).mean()
+
+df_movement['delta_mean_ma_200ms'] = df_movement['delta_mean'].rolling(window=obs_per_sec//5).mean()
+
+df_movement['diff_1'] = abs(df_movement['obs'].diff(1))
+
+df_movement['diff_1_rolling_mean_abs'] = df_movement['diff_1'].rolling(window=10).mean()
+
+df_movement['diff_2'] = abs(df_movement['diff_1_rolling_mean_abs'].diff())
+
+
+aa = df_movement.iloc[20000:30000]    # Long movement (possibly intense)
+
+bb = df_movement.iloc[50000:52000]     # Calm
+
+cc = df_movement.iloc[64000:65000]   # Very Short movement
+
+dd = df_movement.iloc[95000:98000]   # Medium movement
+
+ee = df_movement.iloc[4000:7000]     #Movement
+
+ff = df_movement.iloc[30000:35000]   #Movement
 
 #from matplotlib.pyplot import figure
 #figure(num=None, figsize=(60, 6))
-#plt.plot(df['obs'])
+#plt.plot(df_movement['obs'])
 
 
 
 #Flagging as movement those with delta_mean_ma_5th > 0.2 25 observations after recording
 
-#df_test = df.copy()
+#df_movement_test = df_movement.copy()
 
-df['movement'] = 0
+df_movement['movement'] = 0
 
-for index, row in df.iterrows():
+for index, row in df_movement.iterrows():
 
-    df.loc[index-49:index+1, 'movement'] = np.where(
+    df_movement.loc[index-49:index+1, 'movement'] = np.where(
             
-            (df.iloc[index]['delta_mean_ma_200ms'] > 0.2) & (~np.isnan(df.iloc[index]['delta_mean_ma_200ms']))
+            (df_movement.iloc[index]['delta_mean_ma_200ms'] > 0.2) & (~np.isnan(df_movement.iloc[index]['delta_mean_ma_200ms']))
             , 1, 0)
 
     
-df.loc[(np.isnan(df['delta_mean_ma_200ms'])), 'delta_mean_ma_200ms'] = 0
+df_movement.loc[(np.isnan(df_movement['delta_mean_ma_200ms'])), 'delta_mean_ma_200ms'] = 0
 
 
 
@@ -107,17 +107,15 @@ import statistics
 from statistics import StatisticsError
 
 
-movement_detected = []
-
-for sec in range(0, df.shape[0], obs_per_sec):
-    try:
-        verdict = bool(np.where(statistics.mode(df.iloc[sec:sec+obs_per_sec]['movement']) == 1, True, False))
-    except StatisticsError:
-        verdict = True
-        
-    movement_detected.append(verdict)
-
-
+#movement_detected = []
+#
+#for sec in range(0, df_movement.shape[0], obs_per_sec):
+#    try:
+#        verdict = bool(np.where(statistics.mode(df_movement.iloc[sec:sec+obs_per_sec]['movement']) == 1, True, False))
+#    except StatisticsError:
+#        verdict = True
+#        
+#    movement_detected.append(verdict)
 
 
 
@@ -127,39 +125,41 @@ for sec in range(0, df.shape[0], obs_per_sec):
 
 
 
-df_test = pd.read_csv(test_file, header=None, names=['obs'])
-
-mean_test = df_test.obs.mean()
-
-median_test = df_test.obs.median()
-
-df_test['obs_mean'] = mean_test
-
-df_test['diff_mean'] = mean_test - df_test['obs']
-
-#df['diff_mean_ma_1s'] = df['diff_mean'].rolling(window=obs_per_sec).mean()
-
-#df['diff_mean_ma_01s'] = df['diff_mean'].rolling(window=obs_per_sec//10).mean()
-
-df_test['delta_mean'] = abs(df_test['diff_mean'] / mean_test)
-
-df_test['delta_mean_ma_100ms'] = df_test['delta_mean'].rolling(window=obs_per_sec//10).mean()
-
-df_test['delta_mean_ma_200ms'] = df_test['delta_mean'].rolling(window=obs_per_sec//5).mean()
 
 
+df_movement_test = pd.read_csv(test_file_movement, header=None, names=['obs'])
 
-df_test['movement'] = 0
+#mean_test = df_movement_test.obs.mean()
 
-for index, row in df_test.iterrows():
+#median_test = df_movement_test.obs.median()
 
-    df_test.loc[index-49:index+1, 'movement'] = np.where(
+df_movement_test['obs_mean'] = mean
+
+df_movement_test['diff_mean'] = mean - df_movement_test['obs']
+
+#df_movement['diff_mean_ma_1s'] = df_movement['diff_mean'].rolling(window=obs_per_sec).mean()
+
+#df_movement['diff_mean_ma_01s'] = df_movement['diff_mean'].rolling(window=obs_per_sec//10).mean()
+
+df_movement_test['delta_mean'] = abs(df_movement_test['diff_mean'] / mean)
+
+df_movement_test['delta_mean_ma_100ms'] = df_movement_test['delta_mean'].rolling(window=obs_per_sec//10).mean()
+
+df_movement_test['delta_mean_ma_200ms'] = df_movement_test['delta_mean'].rolling(window=obs_per_sec//5).mean()
+
+
+
+df_movement_test['movement'] = 0
+
+for index, row in df_movement_test.iterrows():
+
+    df_movement_test.loc[index-49:index+1, 'movement'] = np.where(
             
-            (df_test.iloc[index]['delta_mean_ma_200ms'] > 0.2) & (~np.isnan(df_test.iloc[index]['delta_mean_ma_200ms']))
+            (df_movement_test.iloc[index]['delta_mean_ma_200ms'] > 0.2) & (~np.isnan(df_movement_test.iloc[index]['delta_mean_ma_200ms']))
             , 1, 0)
 
     
-df_test.loc[(np.isnan(df_test['delta_mean_ma_200ms'])), 'delta_mean_ma_200ms'] = 0
+df_movement_test.loc[(np.isnan(df_movement_test['delta_mean_ma_200ms'])), 'delta_mean_ma_200ms'] = 0
 
 
 
@@ -173,9 +173,9 @@ from statistics import StatisticsError
 
 movement_detected = pd.Series()
 
-for sec in range(0, df_test.shape[0], obs_per_sec):
+for sec in range(0, df_movement_test.shape[0], obs_per_sec):
     try:
-        verdict = bool(np.where(statistics.mode(df_test.iloc[sec:sec+obs_per_sec]['movement']) == 1, True, False))
+        verdict = bool(np.where(statistics.mode(df_movement_test.iloc[sec:sec+obs_per_sec]['movement']) == 1, True, False))
     except StatisticsError:
         verdict = True
         
@@ -186,7 +186,7 @@ for sec in range(0, df_test.shape[0], obs_per_sec):
 
 
 
-dd = df_test.iloc[95000:98000]   # Medium movement
+dd = df_movement_test.iloc[95000:98000]   # Medium movement
 
 
 
@@ -194,7 +194,7 @@ dd = df_test.iloc[95000:98000]   # Medium movement
 #from scipy.fftpack import fft
 #from scipy.signal.windows import bohman
 #
-#intervals = range(0, df1.shape[0], 250)
+#intervals = range(0, df_movement1.shape[0], 250)
 #
 #
 #max_amp_index = {}
@@ -213,19 +213,19 @@ dd = df_test.iloc[95000:98000]   # Medium movement
 #plt.plot(window)
 #
 #
-#df['ma_2'] = df['obs'].rolling(window=2, min_periods=1).mean()
+#df_movement['ma_2'] = df_movement['obs'].rolling(window=2, min_periods=1).mean()
 #
 #
 #
 #
 #
 #
-#ft = fft(df.obs)
+#ft = fft(df_movement.obs)
 #
-#sns.lineplot(data=df)
+#sns.lineplot(data=df_movement)
 #
 #sns.lineplot(data=ft)
 #
 #
-#df.obs.mean()
+#df_movement.obs.mean()
 

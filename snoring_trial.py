@@ -15,78 +15,216 @@ import matplotlib.pyplot as plt
 
 import glob 
 
-files = list(glob.glob("snoring_test_data/*.csv"))
-files.sort()
+files_snoring = list(glob.glob("snoring_test_data/*.csv"))
+files_snoring.sort()
 
-test_file = files[-1]
-files.pop(-1)
+test_file_snoring = files_snoring[-1]
+files_snoring.pop(-1)
 
-df = pd.DataFrame()
+df_snoring = pd.DataFrame()
 
-for file in files:
+for file in files_snoring:
     df_open = pd.read_csv(file, header=None)
-    df = pd.concat([df, df_open], axis=0)
+    df_snoring = pd.concat([df_snoring, df_open], axis=0)
     del df_open
     
     
-df = df.reset_index(drop=True)
+df_snoring = df_snoring.reset_index(drop=True)
 
-df.columns = ['obs']
+df_snoring.columns = ['obs']
 
-obs_per_sec = round(df.shape[0]/(4*4*60))
+obs_per_sec = round(df_snoring.shape[0]/(4*4*60))
 
-mean = df.obs.mean()
+mean = df_snoring.obs.mean()
 
-median = df.obs.median()
-
-
-df['obs_mean'] = mean
-
-df['diff_mean'] = mean - df['obs']
+median = df_snoring.obs.median()
 
 
-df['delta_mean'] = (df['diff_mean'] / mean)
+df_snoring['obs_mean'] = mean
 
-df['delta_mean_ma_100ms'] = df['delta_mean'].rolling(window=obs_per_sec//10).mean()
-
-df['delta_mean_ma_200ms'] = df['delta_mean'].rolling(window=obs_per_sec//5).mean()
+df_snoring['diff_mean'] = mean - df_snoring['obs']
 
 
-df['delta_mean_std_10ms'] = df['delta_mean'].rolling(window=10).std()
+df_snoring['delta_mean'] = (df_snoring['diff_mean'] / mean)
 
-df['roll_mean_obs_10'] = df['obs'].rolling(window=10).mean()
+df_snoring['delta_mean_rolling_100ms'] = df_snoring['delta_mean'].rolling(window=obs_per_sec//10).mean()
 
-df['autoreg_4'] = df['obs'].diff(1)
-
-df['autoreg_std'] = df['obs'].rolling(window=2).std()
-
-df['autoreg_std_rolling_mean'] = df['autoreg_std'].rolling(window=10).mean()
-
-df['autoreg_abs'] = abs(df['obs'].diff(5))
-
-df['autoreg_abs_mean'] = abs(df['autoreg_abs'] - df['autoreg_abs'].mean())
-
-df['autoreg_std_rolling_mean_abs'] = df['autoreg_abs'].rolling(window=10).sum()
-
-df['autocorr'] = df['obs'].rolling(window=10).apply(lambda x: x.autocorr(), raw=False)
-
-df['autocorr_5'] = df['obs'].rolling(window=5).apply(lambda x: x.autocorr(), raw=False)
-
-df['autocorr_5_plus_diff'] = df['autocorr_5'] / df['autoreg_4']
+df_snoring['delta_mean_rolling_200ms'] = df_snoring['delta_mean'].rolling(window=obs_per_sec//5).mean()
 
 
-df['diff_mean_rolling'] = df['diff_mean'].rolling(window=obs_per_sec//10).mean()
+df_snoring['delta_mean_rolling_std_100ms'] = df_snoring['delta_mean'].rolling(window=25).std()
 
-aa = df.iloc[600:800]  # Snoring
+df_snoring['roll_mean_obs_10'] = df_snoring['obs'].rolling(window=10).mean()
 
-bb = df.iloc[:500]      # No snoring
+df_snoring['diff_1'] = df_snoring['obs'].diff(1)
 
-cc = df.iloc[1650:2000]      # Snoring
+df_snoring['rolling_std_2'] = df_snoring['obs'].rolling(window=2).std()
+
+df_snoring['rolling_std_2_rolling_mean_10'] = df_snoring['rolling_std_2'].rolling(window=10).mean()
+
+df_snoring['diff_5_abs'] = abs(df_snoring['obs'].diff(5))
+
+df_snoring['diff_5_abs_centred'] = abs(df_snoring['diff_5_abs'] - df_snoring['diff_5_abs'].mean())
+
+df_snoring['diff_5_abs_rolling_mean'] = df_snoring['diff_5_abs'].rolling(window=10).sum()
+
+df_snoring['autocorr_10'] = df_snoring['obs'].rolling(window=10).apply(lambda x: x.autocorr(), raw=False)
+
+df_snoring['autocorr_5'] = df_snoring['obs'].rolling(window=5).apply(lambda x: x.autocorr(), raw=False)
+
+df_snoring['autocorr_5_plus_diff'] = df_snoring['autocorr_5'] / df_snoring['diff_5_abs']
+
+
+df_snoring['diff_mean_rolling'] = df_snoring['diff_mean'].rolling(window=obs_per_sec//10).mean()
+
+aa = df_snoring.iloc[600:800]  # Snoring
+
+bb = df_snoring.iloc[:500]      # No snoring
+
+cc = df_snoring.iloc[1650:2000]      # Snoring
+
+dd = df_snoring.iloc[54200:54600]   # Snoring
+
+ee = df_snoring.iloc[52900:53300]   # No snoring
+
+ff = df_snoring.iloc[42000:42400]
+
+gg = df_snoring.iloc[42600: 43000]
+
+
+bk = df_snoring.copy()
+
+df_snoring['snoring'] = 0
+
+for index, row in df_snoring.iterrows():
+    
+    df_snoring.loc[index, 'snoring'] = np.where(
+            df_snoring.loc[index:index+249, 'rolling_std_2'].mean() > 0.75, 1, 0)
 
 
 
 
 
+
+import statistics
+
+from statistics import StatisticsError
+
+snoring_detected = []
+
+for sec in range(0, df_snoring.shape[0], obs_per_sec):
+    try:
+        verdict = bool(np.where(statistics.mode(df_snoring.iloc[sec:sec+obs_per_sec]['snoring']) == 1, True, False))
+    except StatisticsError:
+        verdict = True
+        
+    snoring_detected.append(verdict)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+df_snoring_test = pd.read_csv(test_file_snoring, header=None)
+
+
+df_snoring_test = df_snoring_test.reset_index(drop=True)
+
+df_snoring_test.columns = ['obs']
+
+obs_per_sec = round(df_snoring_test.shape[0]/(4*4*60))
+
+mean = df_snoring_test.obs.mean()
+
+median = df_snoring_test.obs.median()
+
+
+df_snoring_test['obs_mean'] = mean
+
+df_snoring_test['diff_mean'] = mean - df_snoring_test['obs']
+
+
+df_snoring_test['delta_mean'] = (df_snoring_test['diff_mean'] / mean)
+
+df_snoring_test['delta_mean_rolling_100ms'] = df_snoring_test['delta_mean'].rolling(window=obs_per_sec//10).mean()
+
+df_snoring_test['delta_mean_rolling_200ms'] = df_snoring_test['delta_mean'].rolling(window=obs_per_sec//5).mean()
+
+
+df_snoring_test['delta_mean_rolling_std_100ms'] = df_snoring_test['delta_mean'].rolling(window=25).std()
+
+df_snoring_test['roll_mean_obs_10'] = df_snoring_test['obs'].rolling(window=10).mean()
+
+df_snoring_test['diff_1'] = df_snoring_test['obs'].diff(1)
+
+df_snoring_test['rolling_std_2'] = df_snoring_test['obs'].rolling(window=2).std()
+
+df_snoring_test['rolling_std_2_rolling_mean_10'] = df_snoring_test['rolling_std_2'].rolling(window=10).mean()
+
+df_snoring_test['diff_5_abs'] = abs(df_snoring_test['obs'].diff(5))
+
+df_snoring_test['diff_5_abs_centred'] = abs(df_snoring_test['diff_5_abs'] - df_snoring_test['diff_5_abs'].mean())
+
+df_snoring_test['diff_5_abs_rolling_mean'] = df_snoring_test['diff_5_abs'].rolling(window=10).sum()
+
+df_snoring_test['autocorr_10'] = df_snoring_test['obs'].rolling(window=10).apply(lambda x: x.autocorr(), raw=False)
+
+df_snoring_test['autocorr_5'] = df_snoring_test['obs'].rolling(window=5).apply(lambda x: x.autocorr(), raw=False)
+
+df_snoring_test['autocorr_5_plus_diff'] = df_snoring_test['autocorr_5'] / df_snoring_test['diff_5_abs']
+
+
+df_snoring_test['diff_mean_rolling'] = df_snoring_test['diff_mean'].rolling(window=obs_per_sec//10).mean()
+
+
+
+
+
+
+df_snoring_test['snoring'] = 0
+
+for index, row in df_snoring_test.iterrows():
+    
+    df_snoring_test.loc[index, 'snoring'] = np.where(
+            df_snoring_test.loc[index:index+249, 'rolling_std_2'].mean() > 0.75, 1, 0)
+
+
+
+
+import statistics
+
+from statistics import StatisticsError
+
+snoring_detected = pd.Series()
+
+timestep = 25
+
+for sec in range(0, df_snoring_test.shape[0], timestep):
+    try:
+        verdict = bool(np.where(statistics.mode(df_snoring_test.iloc[sec:sec+timestep]['snoring']) == 1, True, False))
+    except StatisticsError:
+        verdict = True
+        
+    snoring_detected[str(sec)+":"+str(sec+timestep)] = verdict
+
+
+
+
+
+
+
+
+
+dd.autoreg_std.mean()
 
 def autocorr(x):
     result = np.correlate(x, x, mode='full')
