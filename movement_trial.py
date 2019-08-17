@@ -126,7 +126,6 @@ from statistics import StatisticsError
 
 
 
-
 df_movement_test = pd.read_csv(test_file_movement, header=None, names=['obs'])
 
 #mean_test = df_movement_test.obs.mean()
@@ -173,14 +172,24 @@ from statistics import StatisticsError
 
 movement_detected = pd.Series()
 
-for sec in range(0, df_movement_test.shape[0], obs_per_sec):
+timesteps = np.arange(0, df_movement_test.shape[0], obs_per_sec)
+
+for sec in timesteps:
     try:
         verdict = bool(np.where(statistics.mode(df_movement_test.iloc[sec:sec+obs_per_sec]['movement']) == 1, True, False))
     except StatisticsError:
         verdict = True
         
-    movement_detected[str(sec)+":"+str(sec+obs_per_sec)] = verdict
+    movement_detected[str(sec)] = verdict
 
+
+
+
+plt.plot(df_movement_test.obs)
+
+for i, sec in enumerate(timesteps):
+    if movement_detected[str(sec)] == True:
+        plt.axvspan(sec, sec+obs_per_sec-1, alpha=0.3, color='r', zorder=20)
 
 
 
